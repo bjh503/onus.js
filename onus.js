@@ -3,52 +3,22 @@
  * @type {Object}
  */
 onus = function(config){
-    /**
-     * The URL to send the data back to 
-     * @type String - http://www.example/com/onuserver
-     */
-    this.serverurl = config.serverurl;
 
-    // Connect to the socket
-    this.socket = io.connect(this.serverurl);
+    // Take this into the local scope
+    var self = this;
+    var cfg = {
+        serverId: null,
+        alreadySentCount: 0
+    };
 
-    // On connection, we can run the rest of Onus
-    this.socket.on('connect', function(){
-
-        // Check the state of the load
-        if(document.readyState == 'complete') window.onus.init();
-        else
-            // We need to wait until all of the resources have loaded, then we can start
-            window.addEventListener('load', function (){
-                window.onus.init();
-            });
-
-        // Set up some events
-        window.onus.socket.on('partum', function(id){
-
-            // We have been given an ID! Save it for later so we can send it back to the server
-            window.onus.id = id;
-        });
-
-    });
-
-    /**
-     * Keeps track of the messages already sent to the server
-     * @type Number
-     */
-    this.alreadySentCount = 0;
-
-    /**
-     * An ID sent to us by the server. It hasn't been sent yet :(
-     * @type Number
-     */
-    this.id = null;
+    // Add the config array passed to onus
+    cfg = cfg.concat(config);
 
     /**
      * Specifies all of the drivers currently supported
      * @type {Object}
      */
-    this.drivers = {
+    var drivers = {
 
         'chrome' : {
 
@@ -79,6 +49,29 @@ onus = function(config){
             }
         }
     }
+
+    // Connect to the socket
+    self.cfg.socket = io.connect(self.cfg.serverUrl);
+
+    // On connection, we can run the rest of Onus
+    self.socket.on('connect', function(){
+
+        // Check the state of the load
+        if(document.readyState == 'complete') self.init();
+        else
+            // We need to wait until all of the resources have loaded, then we can start
+            window.addEventListener('load', function (){
+                self.init();
+            });
+
+        // Set up some events
+        self.socket.on('partum', function(id){
+
+            // We have been given an ID! Save it for later so we can send it back to the server
+            self.cfg.serverId = id;
+        });
+
+    });
 };
 
 /**
@@ -100,13 +93,13 @@ onus.prototype = {
         );
 
         // Now remove the ones we have already sent
-        data.splice(0, this.alreadySentCount);
+        data.splice(0, this.cfg.alreadySentCount);
 
-        return {data: data, bowser: window.bowser, id: this.id};
+        return {data: data, bowser: window.bowser, id: this.cfg.serverId};
     },
 
     /**
-     *  
+     *
      * @return {[type]} [description]
      */
     report : function(){
@@ -114,27 +107,29 @@ onus.prototype = {
         var report = this.gather();
 
         // Don't send 0 data to the server
-        if(report.data.length == 0) return;
+        if(report.data.length === 0) return;
 
         // Now increase the sent count
-        this.alreadySentCount += report.data.length;
+        this.cfg.alreadySentCount += report.data.length;
 
         this.socket.emit('renuntio', report);
     },
 
     init: function(){
 
+        var self = this;
+
         // Gather up the data and report immediately, then start a 5 second buffer
-        this.report();
+        self.report();
 
         // Start the timeout
         setInterval(function(){
-            window.onus.report();
+            self.report();
         }, 5000);
     }
 }
 
 // Create a new instance with the serverurl
 window.onus = new onus({
-    serverurl : 'http://127.0.0.1:1337/'
+    serverUrl : 'http://127.0.0.1:1337/'
 });
