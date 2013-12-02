@@ -6,19 +6,19 @@ onus = function(config){
 
     // Take this into the local scope
     var self = this;
-    var cfg = {
-        reportId: null,
-        alreadySentCount: 0
-    };
 
-    // Add the config array passed to onus
-    cfg = cfg.concat(config);
+    // This might be dangerous...
+    self.cfg = config;
+
+    // Overwrite these things
+    self.cfg.reportId = null;
+    self.cfg.alreadySentCount = 0;
 
     /**
      * Specifies all of the drivers currently supported
      * @type {Object}
      */
-    var drivers = {
+    self.drivers = {
 
         'chrome' : {
 
@@ -54,7 +54,7 @@ onus = function(config){
     self.cfg.socket = io.connect(self.cfg.serverUrl);
 
     // On connection, we can run the rest of Onus
-    self.socket.on('connect', function(){
+    self.cfg.socket.on('connect', function(){
 
         // Check the state of the load
         if(document.readyState == 'complete') self.init();
@@ -65,7 +65,7 @@ onus = function(config){
             });
 
         // Set up some events
-        self.socket.on('partum', function(id){
+        self.cfg.socket.on('partum', function(id){
 
             // We have been given an ID! Save it for later so we can send it back to the server
             self.cfg.reportId = id;
@@ -112,7 +112,7 @@ onus.prototype = {
         // Now increase the sent count
         this.cfg.alreadySentCount += report.data.length;
 
-        this.socket.emit('renuntio', report);
+        this.cfg.socket.emit('renuntio', report);
     },
 
     init: function(){
