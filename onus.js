@@ -102,7 +102,7 @@ onus.prototype = {
         // Now remove the ones we have already sent
         data.splice(0, this.alreadySentCount);
 
-        return {data: data, bowser: window.bowser, id: this.id};
+        return {data: data, bowser: window.bowser, id: this.id, url: document.location.toString()};
     },
 
     /**
